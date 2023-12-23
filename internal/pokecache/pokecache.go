@@ -1,6 +1,7 @@
 package pokecache
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -14,24 +15,27 @@ type Cache struct {
 	entries  map[string]cacheEntry
 	mu       sync.Mutex
 	interval time.Duration
+	stop     chan struct{}
 }
 
-func NewCache(interval time.Duration) *Cache {
+func NewCache(wait time.Duration) *Cache {
+	fmt.Println("creating cache")
 	cache := &Cache{
 		entries:  make(map[string]cacheEntry),
 		mu:       sync.Mutex{},
-		interval: interval,
+		interval: wait,
+		stop:     make(chan struct{}),
 	}
-	cache.reapLoop(interval)
+	go cache.reapLoop(wait)
 	return cache
 }
 
-func (c *Cache) Add(key string, val []byte) {
+func (c *Cache) Add(key string, value []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.entries[key] = cacheEntry{
 		createdAt: time.Now().UTC(),
-		val:       val,
+		val:       value,
 	}
 }
 
@@ -44,8 +48,15 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 
 func (c *Cache) reapLoop(interval time.Duration) {
 	ticker := time.NewTicker(interval)
-	for range ticker.C {
-		c.reap(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			c.reap(interval)
+		case <-c.stop:
+			// Received stop signal, exit the loop
+			return
+		}
 	}
 }
 
@@ -56,4 +67,8 @@ func (c *Cache) reap(interval time.Duration) {
 			delete(c.entries, k)
 		}
 	}
+}
+
+func (c *Cache) StopReapLoop() {
+	close(c.stop) // Send signal to stop reapLoop
 }
