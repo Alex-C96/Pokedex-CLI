@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/alex-c96/pokedex-cli/internal/pokeapi"
 )
@@ -105,6 +106,7 @@ func startRepl(cfg *config) {
 			command, ok := commands[line]
 			if !ok {
 				fmt.Println("invalid command")
+				break
 			}
 			err := command.callback(cfg)
 			if err != nil {
@@ -122,7 +124,7 @@ func startRepl(cfg *config) {
 func main() {
 
 	cfg := config{
-		pokeapiClient: pokeapi.NewClient(),
+		pokeapiClient: pokeapi.NewClient(time.Hour),
 	}
 
 	startRepl(&cfg)

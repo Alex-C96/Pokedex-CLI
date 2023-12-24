@@ -70,5 +70,5 @@ func (c *Cache) reap(interval time.Duration) {
 }
 
 func (c *Cache) StopReapLoop() {
-	close(c.stop) // Send signal to stop reapLoop
+	close(c.stop)
 }
