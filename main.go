@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/alex-c96/pokedex-cli/internal/pokeapi"
@@ -19,10 +20,10 @@ type config struct {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*config) error
+	callback    func(*config, []string) error
 }
 
-func commandHelp(cfg *config) error {
+func commandHelp(cfg *config, args []string) error {
 	commands := getCommands()
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
@@ -33,13 +34,13 @@ func commandHelp(cfg *config) error {
 	return nil
 }
 
-func commandExit(cfg *config) error {
+func commandExit(cfg *config, args []string) error {
 	fmt.Println("exiting program.")
 	os.Exit(0)
 	return nil
 }
 
-func commandMap(cfg *config) error {
+func commandMap(cfg *config, args []string) error {
 	locationResp, err := cfg.pokeapiClient.ListLocationAreas(cfg.nextLocationAreaURL)
 	if err != nil {
 		return err
@@ -52,7 +53,7 @@ func commandMap(cfg *config) error {
 	return nil
 }
 
-func commandMapb(cfg *config) error {
+func commandMapb(cfg *config, args []string) error {
 	if cfg.prevLocationAreaURL == nil {
 		return errors.New("you are on the first page")
 	}
@@ -65,6 +66,20 @@ func commandMapb(cfg *config) error {
 	}
 	cfg.nextLocationAreaURL = locationResp.Next
 	cfg.prevLocationAreaURL = locationResp.Previous
+	return nil
+}
+
+func commandExplore(cfg *config, args []string) error {
+	if len(args) < 2 {
+		return errors.New("please provide an area argument")
+	}
+	exploreResp, err := cfg.pokeapiClient.ExploreLocation(args[1])
+	if err != nil {
+		return err
+	}
+	for _, pokemon := range exploreResp.PokemonEncounters {
+		fmt.Printf(" - %s\n", pokemon.Pokemon.Name)
+	}
 	return nil
 }
 
@@ -85,6 +100,11 @@ func getCommands() map[string]cliCommand {
 			description: "display the previous list of locations",
 			callback:    commandMapb,
 		},
+		"explore": {
+			name:        "explore",
+			description: "explore an area for Pokemon",
+			callback:    commandExplore,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Used to exit the Pokedex",
@@ -102,13 +122,14 @@ func startRepl(cfg *config) {
 
 		for scanner.Scan() {
 			line := scanner.Text()
+			args := strings.Split(line, " ")
 
-			command, ok := commands[line]
+			command, ok := commands[args[0]]
 			if !ok {
 				fmt.Println("invalid command")
 				break
 			}
-			err := command.callback(cfg)
+			err := command.callback(cfg, args)
 			if err != nil {
 				fmt.Println(err)
 			}
