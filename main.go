@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ type config struct {
 	pokeapiClient       pokeapi.Client
 	nextLocationAreaURL *string
 	prevLocationAreaURL *string
+	caughtPokemon       map[string]pokeapi.Pokemon
 }
 
 type cliCommand struct {
@@ -37,6 +39,34 @@ func commandHelp(cfg *config, args []string) error {
 func commandExit(cfg *config, args []string) error {
 	fmt.Println("exiting program.")
 	os.Exit(0)
+	return nil
+}
+
+func commandCatch(cfg *config, args []string) error {
+	if len(args) < 2 {
+		return errors.New("please provide a pokemon to catch")
+	}
+	pokemonName := args[1]
+	pokemonResp, err := cfg.pokeapiClient.GetPokemon(pokemonName)
+	if err != nil {
+		return err
+	}
+	baseExp := pokemonResp.BaseExperience
+
+	randNum := rand.Intn(baseExp)
+	const threshold = 50
+
+	fmt.Print(".\n")
+	time.Sleep(time.Second * 1)
+	fmt.Print("..\n")
+	time.Sleep(time.Second * 1)
+	fmt.Print("...\n")
+	time.Sleep(time.Second * 1)
+	if randNum < threshold {
+		return fmt.Errorf("failed to catch %s\n", pokemonName)
+	}
+	fmt.Printf("You caught %s!\n", pokemonName)
+	cfg.caughtPokemon[pokemonName] = pokemonResp
 	return nil
 }
 
@@ -105,6 +135,11 @@ func getCommands() map[string]cliCommand {
 			description: "explore an area for Pokemon",
 			callback:    commandExplore,
 		},
+		"catch": {
+			name:        "catch",
+			description: "try and catch a pokemon",
+			callback:    commandCatch,
+		},
 		"exit": {
 			name:        "exit",
 			description: "Used to exit the Pokedex",
@@ -146,6 +181,7 @@ func main() {
 
 	cfg := config{
 		pokeapiClient: pokeapi.NewClient(time.Hour),
+		caughtPokemon: make(map[string]pokeapi.Pokemon),
 	}
 
 	startRepl(&cfg)
