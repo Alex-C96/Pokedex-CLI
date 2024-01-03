@@ -55,18 +55,40 @@ func commandCatch(cfg *config, args []string) error {
 
 	randNum := rand.Intn(baseExp)
 	const threshold = 50
-
 	fmt.Print(".\n")
 	time.Sleep(time.Second * 1)
 	fmt.Print("..\n")
 	time.Sleep(time.Second * 1)
 	fmt.Print("...\n")
 	time.Sleep(time.Second * 1)
-	if randNum < threshold {
+	if randNum > threshold {
 		return fmt.Errorf("failed to catch %s\n", pokemonName)
 	}
 	fmt.Printf("You caught %s!\n", pokemonName)
 	cfg.caughtPokemon[pokemonName] = pokemonResp
+	return nil
+}
+
+func commandInspect(cfg *config, args []string) error {
+	if len(args) < 2 {
+		return errors.New("please provide a pokemon to inspect")
+	}
+	pokemonToInspect := args[1]
+	pokemonDetails, ok := cfg.caughtPokemon[pokemonToInspect]
+	if !ok {
+		return errors.New("you have not cauch that pokemon")
+	}
+	fmt.Printf("Name: %s\n", pokemonDetails.Name)
+	fmt.Printf("Height: %v\n", pokemonDetails.Height)
+	fmt.Printf("Weight: %v\n", pokemonDetails.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range pokemonDetails.Stats {
+		fmt.Printf("\t-%s: %v\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, types := range pokemonDetails.Types {
+		fmt.Printf("\t- %v\n", types.Type.Name)
+	}
 	return nil
 }
 
@@ -139,6 +161,11 @@ func getCommands() map[string]cliCommand {
 			name:        "catch",
 			description: "try and catch a pokemon",
 			callback:    commandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "inspect the pokemon's stats",
+			callback:    commandInspect,
 		},
 		"exit": {
 			name:        "exit",
