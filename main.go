@@ -55,6 +55,7 @@ func commandCatch(cfg *config, args []string) error {
 
 	randNum := rand.Intn(baseExp)
 	const threshold = 50
+	fmt.Printf("You throw a pokeball at %s\n", pokemonName)
 	fmt.Print(".\n")
 	time.Sleep(time.Second * 1)
 	fmt.Print("..\n")
@@ -135,6 +136,17 @@ func commandExplore(cfg *config, args []string) error {
 	return nil
 }
 
+func commandPokedex(cfg *config, args []string) error {
+	if len(cfg.caughtPokemon) < 1 {
+		return errors.New("you have not caught any pokemon")
+	}
+	fmt.Println("Your Pokedex:")
+	for _, pokemon := range cfg.caughtPokemon {
+		fmt.Printf("\t- %s\n", pokemon.Name)
+	}
+	return nil
+}
+
 func getCommands() map[string]cliCommand {
 	commands := map[string]cliCommand{
 		"help": {
@@ -166,6 +178,11 @@ func getCommands() map[string]cliCommand {
 			name:        "inspect",
 			description: "inspect the pokemon's stats",
 			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "display the pokemon in your pokedex",
+			callback:    commandPokedex,
 		},
 		"exit": {
 			name:        "exit",

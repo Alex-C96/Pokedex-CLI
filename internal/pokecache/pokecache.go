@@ -1,7 +1,6 @@
 package pokecache
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -19,7 +18,6 @@ type Cache struct {
 }
 
 func NewCache(wait time.Duration) *Cache {
-	fmt.Println("creating cache")
 	cache := &Cache{
 		entries:  make(map[string]cacheEntry),
 		mu:       sync.Mutex{},
@@ -54,7 +52,6 @@ func (c *Cache) reapLoop(interval time.Duration) {
 		case <-ticker.C:
 			c.reap(interval)
 		case <-c.stop:
-			// Received stop signal, exit the loop
 			return
 		}
 	}
