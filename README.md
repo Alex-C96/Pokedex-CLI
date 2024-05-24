@@ -49,7 +49,7 @@ This is a Command Line Interface (CLI) application for exploring and interacting
 2. Clone this repository to your local machine.
 3. Navigate to the project directory.
 ```bash
-cd path/to/pokemon-pokedex-clo
+cd path/to/pokemon-pokedex-cli
 ```
 4. Run the project
 ```bash
